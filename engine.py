@@ -1,3 +1,8 @@
+import math
+import numpy as np
+import matplotlib.pyplot as plt 
+
+
 class Value:
     def __init__(self, data, _children=(), _op=None, label=""):
         self.data = data
@@ -30,7 +35,7 @@ class Value:
         return out
 
     def __pow__(self, other):
-        assert isinstance(other, (float, int))  # only support int/float
+        assert isinstance(other, (float, int)), "only support int/float"
         out = Value(self.data**other, (self,), f"**{other}")
 
         def _backward():
@@ -67,14 +72,14 @@ class Value:
         def build_topo(v):
             if v not in visited:
                 visited.add(v)
-            for child in v._prev:
-                build_topo(child)
-            topo.append(v)
+                for child in v._prev:
+                    build_topo(child)
+                topo.append(v)
 
         build_topo(self)
         print(topo)
 
-        self.grad = 1.0
+        self.grad = 1
         for node in reversed(topo):
             node._backward()
 
@@ -95,3 +100,32 @@ class Value:
 
     def __neg__(self):
         return self * (-1.0)
+
+def main():
+    # prepare a simple neural net.
+    # inputs
+    x1 = Value(2.0, label="x1")
+    x2 = Value(0.0, label="x2")
+    # weights
+    w1 = Value(-3.0, label="w1")
+    w2 = Value(1.0, label="w2")
+    # bias
+
+    b = Value(6.8813735, label="b")
+
+    # x1w1 + x2w2 + b
+    x1w1 = x1 * w1
+    x1w1.label = "x1*w1"
+    x2w2 = x2 * w2
+    x2w2.label = "x2*w2"
+    x1w1x2w2 = x1w1 + x2w2
+    x1w1x2w2.label = "x1w1 + x2w2"
+    n = x1w1x2w2 + b
+    n.label = "n"
+    e = (2*n).exp()
+    o = (e-1)/(e+1)
+    o.label = 'o'
+    o.backward()
+
+if __name__ == "__main__":
+    main()
